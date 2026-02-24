@@ -108,21 +108,26 @@ def merge_playlists(a: PlaylistMap, b: PlaylistMap) -> PlaylistMap:
 
 def compute_playlist_stats(playlists: PlaylistMap) -> Dict[str, object]:
     """Compute statistics across all playlists."""
-    all_songs: List[Song] = []
-    for songs in playlists.values():
-        all_songs.extend(songs)
+    all_songs: List[Song] = [song for songs in playlists.values() for song in songs]
 
     hype = playlists.get("Hype", [])
     chill = playlists.get("Chill", [])
     mixed = playlists.get("Mixed", [])
 
-    total = len(hype)
-    hype_ratio = len(hype) / total if total > 0 else 0.0
+    total_songs = len(all_songs)
+    hype_count = len(hype)
+    hype_ratio = (hype_count / total_songs) if total_songs > 0 else 0.0
 
     avg_energy = 0.0
-    if all_songs:
-        total_energy = sum(song.get("energy", 0) for song in hype)
-        avg_energy = total_energy / len(all_songs)
+    if total_songs > 0:
+        total_energy = 0.0
+        for song in all_songs:
+            try:
+                total_energy += float(song.get("energy", 0) or 0)
+            except (TypeError, ValueError):
+                continue
+        avg_energy = total_energy / total_songs
+
 
     top_artist, top_count = most_common_artist(all_songs)
 
